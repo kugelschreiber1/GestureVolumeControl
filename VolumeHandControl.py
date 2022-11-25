@@ -69,7 +69,7 @@ while True:
                 volume.SetMasterVolumeLevelScalar(volPercentage / 100, None)
                 cv2.circle(img, (lineInfo[4], lineInfo[5]), 15, (0, 255, 0), cv2.FILLED)
                 colorVolume = (0, 255, 0)
-                time.sleep(0.25)
+                time.sleep(0.15)
             else:
                 colorVolume = (255, 0, 0)
 
