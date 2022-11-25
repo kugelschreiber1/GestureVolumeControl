@@ -1,5 +1,6 @@
 # This script enables the webcam
 # This module gets the position of the hand landmarks for the user easily
+
 import cv2
 import mediapipe as mp
 import time
