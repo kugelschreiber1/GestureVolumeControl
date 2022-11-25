@@ -19,7 +19,7 @@ cap.set(3, wCam)
 cap.set(4, hCam)
 pTime = 0
 
-detector = htm.HandDetector(detectionConf=0.7)
+detector = htm.HandDetector(detectionConf=0.7, maxHands=1)
 
 devices = AudioUtilities.GetSpeakers()
 interface = devices.Activate(
@@ -34,63 +34,62 @@ maxVol = volRange[1]  # 0
 vol = 0
 volBar = 400
 volPercentage = 0
+area = 0
+colorVolume = (255, 0, 0)
 while True:
     success, img = cap.read()
 
-    # Find hand
+    # Find hand to use
     img = detector.findHands(img)
-    lmList = detector.findPosition(img, draw=False)
+    lmList, boundingbox = detector.findPosition(img, draw=True)
     if len(lmList) != 0:
-        # Filter based on size
+        # Filter based on size(will use the bounding box)
+        area = (boundingbox[2] - boundingbox[0]) * (boundingbox[3] - boundingbox[1]) // 100
+        # print(area)
+        if 250 < area < 1000:
+            # print('yes')
+            # Find the distance between the index finger and the thumb
+            length, img, lineInfo = detector.findDistance(4, 8, img)
+            # print(length)
 
-        # Find the distance between the index finger and the thumb
+            # Covert distance to actual volume
+            volBar = np.interp(length, [50, 300], [400, 150])
+            volPercentage = np.interp(length, [50, 300], [0, 100])
 
-        # Covert length to actual volume
+            # Reduce resolution to make the volume change smoother
+            smoothness = 10
+            volPercentage = smoothness * round(volPercentage / smoothness)
 
-        # Reduce resolution to make the volume change smoother
+            # Check which of the fingers are up in the visible range
+            fingers = detector.fingersUp()
+            # print(fingers)
 
-        # Check which of the fingers is up in the visible range
+            # if pinky is down set volume
+            if not fingers[4]:
+                volume.SetMasterVolumeLevelScalar(volPercentage / 100, None)
+                cv2.circle(img, (lineInfo[4], lineInfo[5]), 15, (0, 255, 0), cv2.FILLED)
+                colorVolume = (0, 255, 0)
+                time.sleep(0.25)
+            else:
+                colorVolume = (255, 0, 0)
 
-        # If the pinky finger is up set the volume
+            # Hand range 50 - 300
+            # Windows volume range = -65 - 0
 
-        # Drawings
-
-        # Frame rate
-
-        # print(lmList[4], lmList[8])
-
-        x1, y1 = lmList[4][1], lmList[4][2]
-        x2, y2 = lmList[8][1], lmList[8][2]
-        cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
-
-        cv2.circle(img, (x1, y1), 15, (255, 0, 255), cv2.FILLED)
-        cv2.circle(img, (x2, y2), 15, (255, 0, 255), cv2.FILLED)
-        cv2.line(img, (x1, y1), (x2, y2), (255, 0, 255), 3)
-        cv2.circle(img, (cx, cy), 15, (255, 0, 255), cv2.FILLED)
-
-        length = math.hypot(x2 - x1, y2 - y1)
-        # print(length)
-
-        # Hand range 50 - 300
-        # Volume range = -65 - 0
-
-        vol = np.interp(length, [50, 300], [minVol, maxVol])
-        volBar = np.interp(length, [50, 300], [400, 150])
-        volPercentage = np.interp(length, [50, 300], [0, 100])
-        print(int(length), vol)
-        volume.SetMasterVolumeLevel(vol, None)
-
-        if length < 50:
-            cv2.circle(img, (cx, cy), 15, (0, 255, 0), cv2.FILLED)
-
+    # Drawings
     cv2.rectangle(img, (50, 150), (85, 400), (255, 0, 0), 3)
     cv2.rectangle(img, (50, int(volBar)), (85, 400), (255, 0, 0), cv2.FILLED)
-    cv2.putText(img, f'{int(volPercentage)} %', (40, 450), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 3)
+    cv2.putText(img, f'{int(volPercentage)} %', (40, 450), cv2.FONT_HERSHEY_COMPLEX,
+                1, (255, 0, 0), 3)
 
+    currentVolume = int(volume.GetMasterVolumeLevelScalar() * 100)
+    cv2.putText(img, f'Volume Set: {int(currentVolume)}', (350, 50), cv2.FONT_HERSHEY_COMPLEX,
+                1, colorVolume, 3)
+
+    # Frame rate
     cTime = time.time()
     fps = 1 / (cTime - pTime)
     pTime = cTime
-
     cv2.putText(img, f'FPS: {int(fps)}', (40, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 3)
 
     cv2.imshow("Image", img)
