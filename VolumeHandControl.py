@@ -53,8 +53,8 @@ while True:
             # print(length)
 
             # Covert distance to actual volume
-            volBar = np.interp(length, [50, 300], [400, 150])
-            volPercentage = np.interp(length, [50, 300], [0, 100])
+            volBar = np.interp(length, [50, 200], [400, 150])
+            volPercentage = np.interp(length, [50, 200], [0, 100])
 
             # Reduce resolution to make the volume change smoother
             smoothness = 10
