@@ -36,9 +36,27 @@ volBar = 400
 volPercentage = 0
 while True:
     success, img = cap.read()
+
+    # Find hand
     img = detector.findHands(img)
     lmList = detector.findPosition(img, draw=False)
     if len(lmList) != 0:
+        # Filter based on size
+
+        # Find the distance between the index finger and the thumb
+
+        # Covert length to actual volume
+
+        # Reduce resolution to make the volume change smoother
+
+        # Check which of the fingers is up in the visible range
+
+        # If the pinky finger is up set the volume
+
+        # Drawings
+
+        # Frame rate
+
         # print(lmList[4], lmList[8])
 
         x1, y1 = lmList[4][1], lmList[4][2]
@@ -68,8 +86,6 @@ while True:
     cv2.rectangle(img, (50, 150), (85, 400), (255, 0, 0), 3)
     cv2.rectangle(img, (50, int(volBar)), (85, 400), (255, 0, 0), cv2.FILLED)
     cv2.putText(img, f'{int(volPercentage)} %', (40, 450), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 3)
-
-
 
     cTime = time.time()
     fps = 1 / (cTime - pTime)

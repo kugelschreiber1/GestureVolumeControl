@@ -6,7 +6,7 @@ import time
 
 
 class HandDetector():
-    def __init__(self, mode=False, maxHands=2, complexity=1, detectionConf=0.5, trackConf=0.5):
+    def __init__(self, mode=False,  maxHands=2, complexity=1, detectionConf=0.5, trackConf=0.5):
         self.mode = mode
         self.maxHands = maxHands
         self.complexity = complexity
@@ -33,20 +33,31 @@ class HandDetector():
         return img
 
     def findPosition(self, img, handNo=0, draw=True):
+        # List containing all values of X
+        xList = []
+        # List containing all values of Y
+        yList = []
         # list with all the landmarks positions
-        lmList = []
+        self.lmList = []
         if self.results.multi_hand_landmarks:
             myHand = self.results.multi_hand_landmarks[handNo]
             for id, lm in enumerate(myHand.landmark):
                 # print(id, lm)
                 height, width, c = img.shape
                 cx, cy = int(lm.x * width), int(lm.y * height)
+                xList.append(cx)
+                yList.append(cy)
                 # print(id, cx, cy)
-                lmList.append([id, cx, cy])
+                self.lmList.append([id, cx, cy])
                 if draw:
                     # if id == 4:  # for choosing which landmark gets highlighted
                     cv2.circle(img, (cx, cy), 15, (255, 0, 255), cv2.FILLED)
-        return lmList
+            xmin,xmax = min(xList),max(xList)
+            ymin,ymax = min(yList), max(yList)
+            # boundingbox contains the values of interest
+            boundingbox = xmin, ymin, xmax, ymax
+
+        return self.lmList
 
 
 def main():
